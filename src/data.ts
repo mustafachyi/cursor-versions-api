@@ -5,7 +5,9 @@ import { GITHUB } from './config';
 import { compareVersions, normalizePlatformName, sortPlatforms, detectWindowsSetupType, getSystemSetupUrl } from './utils';
 
 // Initialize core services
-export const octokit = new Octokit();
+export const octokit = new Octokit({
+  auth: process.env.GITHUB_TOKEN
+});
 
 // Initialize cache store
 export const cache: CacheStore = {

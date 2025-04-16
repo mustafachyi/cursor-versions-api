@@ -156,5 +156,6 @@ The API will be available at `http://localhost:3000` by default (or the port spe
 
 ## Configuration
 
-*   **Port:** Set the `PORT` environment variable (defaults to `3000`).
-*   **Data Sources & Update Interval:** Configured in `src/config.ts`. 
+*   **GitHub API Token:** The API fetches data from GitHub. To avoid rate limits, especially when deployed, provide a [GitHub Personal Access Token](https://github.com/settings/tokens) with `public_repo` scope via the `GITHUB_TOKEN` environment variable. For local development, you can add this to a `.env` file (see `.env.example`). For deployment platforms like Render, set it in the service's environment settings.
+*   **Port:** Set the `PORT` environment variable (defaults to `3000`). Can also be set in `.env` locally.
+*   **Data Sources & Update Interval:** Configured directly in `src/config.ts`. 
