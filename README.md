@@ -128,6 +128,17 @@ Provides the current status of the API and cache.
 }
 ```
 
+## Live Demo
+
+A public instance of this API is hosted at `https://cursor-versions.selfhoster.nl`
+
+You can try it out:
+
+*   **Get all versions:** [`https://cursor-versions.selfhoster.nl/api/v1/versions`](https://cursor-versions.selfhoster.nl/api/v1/versions)
+*   **Get API status:** [`https://cursor-versions.selfhoster.nl/api/v1/status`](https://cursor-versions.selfhoster.nl/api/v1/status)
+
+(Refer to the API Documentation above for details on query parameters like `limit`, `platform`, and `version`)
+
 ## Setup and Installation
 
 1.  **Clone the repository:**
