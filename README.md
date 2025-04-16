@@ -8,13 +8,13 @@ This service fetches Cursor version information from public GitHub repositories,
 
 ## Features
 
-*   Fetches version data from primary and secondary GitHub sources.
-*   Merges and deduplicates version information.
-*   In-memory caching for fast responses.
-*   Periodically checks for updates in the background.
-*   Provides endpoints to query versions by ID, platform, or get the latest.
-*   Distinguishes between user and system installers for Windows.
-*   Includes a status endpoint for monitoring.
+*   Fetches version data from primary and secondary GitHub sources
+*   Merges and deduplicates version information
+*   In-memory caching for fast responses
+*   Periodically checks for updates in the background
+*   Provides endpoints to query versions by ID, platform, or get the latest
+*   Distinguishes between user and system installers for Windows
+*   Includes a status endpoint for monitoring
 
 ## Tech Stack
 
@@ -29,17 +29,17 @@ Base URL: `/api/v1`
 
 ### GET /versions
 
-Retrieves version information.
+Retrieves version information with optimized response handling.
 
 **Query Parameters:**
 
-*   `limit` (optional, number): Limits the number of versions returned. If `limit=1`, returns the latest version. Defaults to all versions.
-*   `platform` (optional, string): Filters versions available for a specific platform (e.g., `win32-x64`, `darwin-arm64`). If combined with `limit=1`, returns the latest version for that platform.
-*   `version` (optional, string): Retrieves data for a specific version ID (e.g., `0.25.0`).
+*   `limit` (optional, number): Maximum number of versions to return. Defaults to all versions
+*   `platform` (optional, string): Filter by platform (e.g., `win32-x64`, `darwin-arm64`)
+*   `version` (optional, string): Get specific version or 'latest'
 
-**Responses:**
+**Response Types:**
 
-*   **Latest Version (`limit=1` or no parameters and `limit=1` implied):**
+*   **Latest Version (`version=latest` or `limit=1`):**
     ```json
     {
       "version": "0.25.0",
@@ -48,11 +48,21 @@ Retrieves version information.
         "win32-x64": { "url": "...", "systemUrl": "..." },
         "darwin-arm64": { "url": "..." },
         "linux-x64": { "url": "..." }
-        // ... other platforms
       }
     }
     ```
-*   **Multiple Versions (e.g., `limit=5`):**
+
+*   **Platform-Specific Latest (`platform=darwin-arm64&limit=1`):**
+    ```json
+    {
+      "version": "0.25.0",
+      "date": "...",
+      "url": "...",
+      "platforms": ["win32-x64", "darwin-arm64", ...]
+    }
+    ```
+
+*   **Multiple Versions (`limit=n`):**
     ```json
     {
       "versions": [
@@ -60,64 +70,39 @@ Retrieves version information.
           "version": "0.25.0",
           "date": "...",
           "platforms": { ... }
-        },
-        {
-          "version": "0.24.1",
-          "date": "...",
-          "platforms": { ... }
         }
-        // ... up to limit
       ]
     }
     ```
-*   **Platform Specific (e.g., `platform=darwin-arm64&limit=1`):**
+
+*   **Platform-Specific Versions (`platform=darwin-arm64`):**
     ```json
-    {
-        "version": "0.25.0",
-        "date": "...",
-        "url": "...",
-        "platforms": ["win32-x64", "darwin-arm64", ...] 
-    }
-    ```
-*   **Platform Specific Multiple (e.g., `platform=darwin-arm64&limit=5`):**
-     ```json
     {
       "versions": [
-          {
-              "version": "0.25.0",
-              "date": "...",
-              "url": "...",
-              "platforms": [...] 
-          },
-          {
-              "version": "0.24.1",
-              "date": "...",
-              "url": "...",
-              "platforms": [...] 
-          }
-          // ... up to limit
+        {
+          "version": "0.25.0",
+          "date": "...",
+          "url": "...",
+          "platforms": [...]
+        }
       ]
     }
     ```
-*   **Version Specific (e.g., `version=0.25.0`):**
-    ```json
-    {
-      "version": "0.25.0",
-      "date": "...",
-      "platforms": { ... }
-    }
-    ```
-*   **Errors:** `404 Not Found` (if platform/version not found), `503 Service Unavailable` (if cache is not yet populated).
+
+**Error Responses:**
+
+*   `404 Not Found`: Platform or version not found
+*   `503 Service Unavailable`: Cache not populated
 
 ### GET /status
 
-Provides the current status of the API and cache.
+Provides API and cache health information.
 
 **Response:**
 
 ```json
 {
-  "status": "healthy", // or "degraded" if cache is empty
+  "status": "healthy",
   "versions": 150,
   "platforms": 6,
   "lastChecked": "2025-02-20T12:00:00.000Z",
@@ -130,31 +115,28 @@ Provides the current status of the API and cache.
 
 ## Live Demo
 
-A public instance of this API is hosted at `https://cursor-versions.selfhoster.nl`
+A public instance is available at `https://cursor-versions.selfhoster.nl`
 
-You can try it out:
+Example queries:
+*   Latest version: [`/api/v1/versions?version=latest`](https://cursor-versions.selfhoster.nl/api/v1/versions?version=latest)
+*   Platform specific: [`/api/v1/versions?platform=darwin-arm64`](https://cursor-versions.selfhoster.nl/api/v1/versions?platform=darwin-arm64)
+*   Health check: [`/api/v1/status`](https://cursor-versions.selfhoster.nl/api/v1/status)
 
-*   **Get all versions:** [`https://cursor-versions.selfhoster.nl/api/v1/versions`](https://cursor-versions.selfhoster.nl/api/v1/versions)
-*   **Get API status:** [`https://cursor-versions.selfhoster.nl/api/v1/status`](https://cursor-versions.selfhoster.nl/api/v1/status)
+## Setup
 
-(Refer to the API Documentation above for details on query parameters like `limit`, `platform`, and `version`)
-
-## Setup and Installation
-
-1.  **Clone the repository:**
+1.  **Clone:**
     ```bash
-    # Replace with your chosen repository name if different
     git clone https://github.com/mustafachyi/cursor-versions-api.git 
     cd cursor-versions-api
     ```
-2.  **Install dependencies:**
+2.  **Install:**
     ```bash
     bun install
     ```
 
 ## Usage
 
-*   **Development (with hot-reloading):**
+*   **Development:**
     ```bash
     bun run dev
     ```
@@ -163,10 +145,10 @@ You can try it out:
     bun run start
     ```
 
-The API will be available at `http://localhost:3000` by default (or the port specified by the `PORT` environment variable).
+Server runs on port 3000 by default (configurable via `PORT` environment variable).
 
 ## Configuration
 
-*   **GitHub API Token:** The API fetches data from GitHub. To avoid rate limits, especially when deployed, provide a [GitHub Personal Access Token](https://github.com/settings/tokens) with `public_repo` scope via the `GITHUB_TOKEN` environment variable. For local development, you can add this to a `.env` file (see `.env.example`). For deployment platforms like Render, set it in the service's environment settings.
-*   **Port:** Set the `PORT` environment variable (defaults to `3000`). Can also be set in `.env` locally.
-*   **Data Sources & Update Interval:** Configured directly in `src/config.ts`. 
+*   **GitHub Token:** Set `GITHUB_TOKEN` environment variable with `public_repo` scope to avoid rate limits
+*   **Port:** Configure via `PORT` environment variable
+*   **Update Interval:** Set in `src/config.ts` 

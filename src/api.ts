@@ -10,24 +10,17 @@ import {
   normalizePlatformName 
 } from './utils';
 
-// Initialize API with CORS support
-export const app = new Hono().use('/*', cors());
+// Initialize API with CORS
+const app = new Hono().use('/*', cors());
 
-// Utility function to process version data into flat response format
+// Process version data into flat response format
 const createFlatVersionResponse = (version: Version): FlatVersionResponse => {
-  if (!version.platforms) {
-    return { version: version.version, date: version.date, platforms: {} };
-  }
+  if (!version.platforms) return { version: version.version, date: version.date, platforms: {} };
 
-  const response: FlatVersionResponse = { 
-    version: version.version, 
-    date: version.date, 
-    platforms: {} 
-  };
-  
+  const response: FlatVersionResponse = { version: version.version, date: version.date, platforms: {} };
   const windowsInstallers = new Map<string, { user?: string; system?: string }>();
   
-  // Process all platforms in single pass for better performance
+  // Single-pass platform processing for better performance
   sortPlatforms(Object.keys(version.platforms)).forEach(name => {
     const url = version.platforms[name];
     const normalizedName = normalizePlatformName(name);
@@ -37,7 +30,7 @@ const createFlatVersionResponse = (version: Version): FlatVersionResponse => {
       return;
     }
 
-    const installers = windowsInstallers.get(normalizedName) || {};
+    const installers = windowsInstallers.get(normalizedName) ?? {};
     const setupType = detectWindowsSetupType(url, name);
     
     if (name.endsWith('-user') || setupType === WindowsSetupType.USER) {
@@ -52,13 +45,10 @@ const createFlatVersionResponse = (version: Version): FlatVersionResponse => {
   // Process Windows installers
   windowsInstallers.forEach((installers, platform) => {
     if (installers.user && installers.system) {
-      response.platforms[platform] = {
-        url: installers.user,
-        systemUrl: installers.system
-      };
+      response.platforms[platform] = { url: installers.user, systemUrl: installers.system };
     } else if (installers.user) {
       const systemUrl = getSystemSetupUrl(installers.user);
-      response.platforms[platform] = {
+      response.platforms[platform] = { 
         url: installers.user,
         ...(systemUrl && { systemUrl })
       };
@@ -72,9 +62,7 @@ const createFlatVersionResponse = (version: Version): FlatVersionResponse => {
 
 // API Routes
 app.get('/api/v1/versions', (c) => {
-  if (!cache.ordered.versions.length) {
-    return c.json({ error: 'No data available' }, 503);
-  }
+  if (!cache.ordered.versions.length) return c.json({ error: 'No data available' }, 503);
 
   const query = c.req.query();
   const limit = Math.min(
@@ -82,7 +70,7 @@ app.get('/api/v1/versions', (c) => {
     cache.ordered.versions.length
   );
 
-  // Handle platform-specific request
+  // Platform-specific request
   if (query.platform) {
     const platformData = cache.byPlatform.get(query.platform);
     return !platformData 
@@ -90,32 +78,27 @@ app.get('/api/v1/versions', (c) => {
       : c.json(limit === 1 ? platformData[0] : { versions: platformData.slice(0, limit) });
   }
 
-  // Handle version-specific request
+  // Latest or specific version request
   if (query.version) {
-    const version = cache.byId.get(query.version);
+    const version = query.version === 'latest' 
+      ? cache.byId.get(cache.latest.version)
+      : cache.byId.get(query.version);
+    
     return !version
-      ? c.json({ error: 'Version not found' }, 404)
+      ? c.json({ error: query.version === 'latest' ? 'No versions available' : 'Version not found' }, 404)
       : c.json(createFlatVersionResponse(version));
   }
 
-  // Handle latest version request
-  if (limit === 1) {
-    const latest = cache.byId.get(cache.latest.version);
-    return !latest
-      ? c.json({ error: 'No versions available' }, 404)
-      : c.json(createFlatVersionResponse(latest));
-  }
-
-  // Handle multiple versions request
-  const versions = cache.ordered.versions
-    .slice(0, limit)
-    .reduce((acc: FlatVersionResponse[], id) => {
-      const version = cache.byId.get(id);
-      if (version) acc.push(createFlatVersionResponse(version));
-      return acc;
-    }, []);
-
-  return c.json({ versions });
+  // Multiple versions request
+  return c.json({
+    versions: cache.ordered.versions
+      .slice(0, limit)
+      .reduce((acc: FlatVersionResponse[], id) => {
+        const version = cache.byId.get(id);
+        if (version) acc.push(createFlatVersionResponse(version));
+        return acc;
+      }, [])
+  });
 });
 
 // Health check endpoint
@@ -125,4 +108,6 @@ app.get('/api/v1/status', (c) => c.json({
   platforms: cache.ordered.platforms.length,
   lastChecked: cache.meta.lastChecked,
   sha: { primary: cache.meta.sha.primary, secondary: cache.meta.sha.secondary }
-})); 
+}));
+
+export { app }; 
